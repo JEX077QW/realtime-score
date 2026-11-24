@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0c">
+<title>实时成绩 · 体测成绩查询</title>
+<style>
+  :root{
+    --bg:#08080a;
+    --panel:#101114;
+    --panel-2:#141519;
+    --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.16);
+    --text:#ececed;
+    --text-2:rgba(255,255,255,.62);
+    --text-3:rgba(255,255,255,.42);
+    --accent:#4ee0aa;
+    --warn:#e0863f;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(900px 520px at 78% -10%, rgba(78,224,170,.10), transparent 62%),
+      radial-gradient(700px 460px at 8% 108%, rgba(86,120,255,.10), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px 18px;
+    min-height:100%;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .app{
+    width:100%;
+    max-width:430px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:calc(var(--radius) + 10px);
+    box-shadow:0 30px 80px rgba(0,0,0,.65), 0 1px 0 rgba(255,255,255,.05) inset;
+    overflow:hidden;
+  }
+
+  /* ===== 顶部导航 ===== */
+  .nav{
+    position:sticky;top:0;z-index:5;
+    display:grid;
+    grid-template-columns:44px 1fr 44px;
+    align-items:center;
+    height:56px;
+    padding:0 6px;
+    background:rgba(16,17,20,.86);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .back{
+    appearance:none;border:0;background:transparent;color:var(--text-2);
+    font-size:24px;line-height:1;height:40px;width:40px;border-radius:12px;
+    cursor:pointer;transition:.18s;font-family:inherit;
+  }
+  .back:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav h1{
+    margin:0;text-align:center;font-size:17px;font-weight:600;letter-spacing:.02em;
+  }
+  .nav-side{display:flex;justify-content:flex-end;padding-right:6px}
+  .dot{width:5px;height:5px;border-radius:50%;background:var(--text-3);box-shadow:12px 0 0 var(--text-3),-12px 0 0 var(--text-3)}
+
+  /* ===== 内容 ===== */
+  main{padding:18px 16px 26px;display:flex;flex-direction:column;gap:14px}
+
+  .card{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 18px 20px;
+  }
+
+  .card-title{
+    margin:0 0 16px;
+    font-size:16px;font-weight:600;
+    color:var(--text);
+    display:flex;align-items:center;gap:8px;
+  }
+  .card-title::before{
+    content:"";width:3px;height:14px;border-radius:2px;
+    background:linear-gradient(180deg,var(--accent),#3aa7ff);opacity:.9;
+  }
+
+  /* 学生信息 */
+  .who{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .avatar{
+    flex:none;width:42px;height:42px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;font-weight:600;color:#0a0a0c;
+    background:linear-gradient(135deg,#7ef0c6,#4ee0aa 55%,#48b7ff);
+  }
+  .who-main{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .name{font-size:19px;font-weight:600;letter-spacing:.04em}
+  .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{
+    font-size:11px;color:var(--text-2);
+    padding:2px 8px;border-radius:999px;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);
+    white-space:nowrap;
+  }
+
+  .meta{display:flex;flex-direction:column;gap:8px;margin:14px 0 0}
+  .meta div{display:flex;align-items:baseline;gap:8px;font-size:14px}
+  .meta .k{color:var(--text-3);flex:none;width:42px}
+  .meta .v{color:var(--text-2);font-variant-numeric:tabular-nums}
+
+  .term{
+    margin:18px 0 0;
+    padding-top:16px;
+    font-size:14px;font-weight:600;letter-spacing:.02em;
+    color:rgba(255,255,255,.86);
+    position:relative;
+  }
+  .term::after{
+    content:"";position:absolute;left:0;right:0;bottom:-10px;height:1px;
+    background:linear-gradient(90deg,rgba(78,224,170,.55),rgba(255,255,255,.14) 46%,rgba(255,255,255,.04));
+  }
+
+  /* 成绩表 */
+  table{
+    width:100%;border-collapse:collapse;margin-top:24px;
+    font-variant-numeric:tabular-nums;
+  }
+  thead th{
+    font-size:14px;font-weight:500;color:var(--text-3);
+    padding:0 0 10px;
+    border-bottom:1px solid var(--line-strong);
+  }
+  thead th:first-child{text-align:left;padding-left:2px}
+  thead th:last-child{text-align:right;padding-right:2px}
+  tbody td{
+    font-size:15px;
+    padding:12px 0;
+    border-bottom:1px solid rgba(255,255,255,.045);
+  }
+  tbody tr:last-child td{border-bottom:0}
+  tbody td:first-child{color:var(--text-2);letter-spacing:.02em}
+  tbody td:last-child{
+    text-align:right;color:#fff;font-weight:600;font-size:16px;
+    padding-right:2px;
+  }
+  tbody tr:hover td{background:rgba(255,255,255,.03)}
+  tbody tr:hover td:first-child{color:var(--text)}
+
+  .note{
+    margin:16px 0 0;
+    font-size:12.5px;line-height:1.75;
+    color:var(--warn);
+    padding:11px 12px;
+    border-radius:12px;
+    background:rgba(224,134,63,.08);
+    border:1px solid rgba(224,134,63,.18);
+  }
+
+  /* 小程序入口 */
+  .mini{padding-bottom:12px}
+  .mini-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:13px 0;border-top:1px solid var(--line);
+    cursor:default;
+  }
+  .mini-row:last-child{border-bottom:0}
+  .mini-row .l{display:flex;align-items:center;gap:9px;font-size:15px;color:var(--text-2)}
+  .ic{
+    width:26px;height:26px;border-radius:8px;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(78,224,170,.12);color:var(--accent);font-size:13px;
+  }
+  .chev{color:var(--text-3);font-size:16px}
+
+  .foot{
+    text-align:center;font-size:11.5px;color:rgba(255,255,255,.22);
+    padding:2px 0 4px;letter-spacing:.08em;
+  }
+
+  /* 入场动画 */
+  .card{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+  .card:nth-of-type(2){animation-delay:.08s}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  tbody tr{animation:fade .45s ease both}
+  tbody tr:nth-child(1){animation-delay:.10s}
+  tbody tr:nth-child(2){animation-delay:.15s}
+  tbody tr:nth-child(3){animation-delay:.20s}
+  tbody tr:nth-child(4){animation-delay:.25s}
+  tbody tr:nth-child(5){animation-delay:.30s}
+  tbody tr:nth-child(6){animation-delay:.35s}
+  tbody tr:nth-child(7){animation-delay:.40s}
+  tbody tr:nth-child(8){animation-delay:.45s}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  /* 移动端整屏 */
+  @media (max-width:480px){
+    body{padding:0;align-items:stretch;display:block}
+    .app{
+      max-width:none;height:100%;min-height:100vh;
+      border:0;border-radius:0;box-shadow:none;
+      padding-bottom:env(safe-area-inset-bottom);
+    }
+    main{padding:14px 12px 24px}
+    .card{border-radius:16px;padding:16px}
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===== 顶部导航 ===== -->
+    <header class="nav">
+      <button class="back" type="button" aria-label="返回">‹</button>
+      <h1>实时成绩</h1>
+      <div class="nav-side"><span class="dot" aria-hidden="true"></span></div>
+    </header>
+
+    <main>
+      <!-- ===== 实时成绩查询 ===== -->
+      <section class="card">
+        <h2 class="card-title">实时成绩查询：</h2>
+
+        <div class="who">
+          <div class="avatar" aria-hidden="true">姚</div>
+          <div class="who-main">
+            <span class="name">姚美军</span>
+            <span class="tags">
+              <span class="tag">麻醉学2025级1班</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div><span class="k">学号</span><span class="v">20252108025</span></div>
+          <div><span class="k">班级</span><span class="v">麻醉学院 &gt; 麻醉学2025级1班</span></div>
+        </div>
+
+        <p class="term">学期：2026-2027学年上学期</p>
+
+        <table>
+          <thead>
+            <tr><th>项目</th><th>测试结果</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>身高</td><td>174.5</td></tr>
+            <tr><td>立定跳远</td><td>2.09</td></tr>
+            <tr><td>肺活量</td><td>5351</td></tr>
+            <tr><td>800/1000米跑</td><td>3.26</td></tr>
+            <tr><td>50米跑</td><td>6.9</td></tr>
+            <tr><td>坐位体前屈</td><td>16.8</td></tr>
+            <tr><td>仰卧起坐/引体向上</td><td>6.00</td></tr>
+            <tr><td>体重</td><td>59.3</td></tr>
+          </tbody>
+        </table>
+
+        <p class="note">注：以上数据为实时测试结果，最终学期或年度成绩以教师最后归档为准。</p>
+      </section>
+
+      <!-- ===== 成绩计算小程序 ===== -->
+      <section class="card mini">
+        <h2 class="card-title">成绩计算小程序</h2>
+        <div class="mini-row">
+          <span class="l"><span class="ic">⌁</span>体测成绩计算器</span>
+          <span class="chev">›</span>
+        </div>
+      </section>
+
+      <div class="foot">数据仅供参考 · 实时成绩</div>
+    </main>
+  </div>
+</body>
+</html>
